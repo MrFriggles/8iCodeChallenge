@@ -13,11 +13,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
+file(COPY resources/Barbie.png  resources/Beard.png  resources/Bottle.png  resources/CleanPlate.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-add_executable(8i
-    main.cpp
-    beyerfilter.cpp
-    beyerfilter.h
-)
+add_executable(8i main.cpp beyerfilter.cpp beyerfilter.h)
 
 target_link_libraries(8i PRIVATE Qt5::Widgets)
