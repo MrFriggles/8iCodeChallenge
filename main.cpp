@@ -1,4 +1,4 @@
-#include "beyerfilter.h"
+#include "bayerfilter.h"
 
 #include <QApplication>
 

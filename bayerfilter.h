@@ -1,5 +1,5 @@
-#ifndef BEYERFILTER_H
-#define BEYERFILTER_H
+#ifndef BAYERFILTER_H
+#define BAYERFILTER_H
 
 #include <QColor>
 #include <QFileDialog>

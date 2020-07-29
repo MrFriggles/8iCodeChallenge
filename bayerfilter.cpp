@@ -1,4 +1,4 @@
-#include "beyerfilter.h"
+#include "bayerfilter.h"
 
 static const QSize windowSize(1000, 700); //Arbritary ... It just looks nice
 
