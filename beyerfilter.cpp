@@ -69,6 +69,8 @@ void BeyerFilter::updateTolerance()
 
 void BeyerFilter::saveOutput()
 {
+    QMessageBox msgBox;
+
     if (debeyer(&sourceImage, &outputImage)
             && extractForeground(&outputImage, &fgOutput)
             && fgOutput.save(tr("beans.png", "PNG")))
@@ -77,15 +79,15 @@ void BeyerFilter::saveOutput()
         sourceButton->setIcon(QPixmap::fromImage(fgOutput));
 
         //TODO this should request user if they want to save the debayered image
-        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Information);
         msgBox.setText("Image 'beans.png' saved to build diretory.");
         msgBox.exec();
     }
     else
     {
-        // TODO omg make an actual error
-        printf("get beaned\n");
-        //error
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("Can't debeyer image... Did you load an image first?");
+        msgBox.exec();
     }
 }
 
@@ -142,7 +144,7 @@ bool BeyerFilter::debeyer(QImage *source, QImage *output)
     {
         for (int j = 0; j < w; j += 2)
         {
-            pixColRed    = source->pixel(j, i)     & 0xffff0000 ; // Red-1
+            pixColRed    = source->pixel(j, i)     & 0xffff0000; // Red-1
             pixColGreen2 = source->pixel(j+1, i)   & 0xff00ff00; // Green-2
             pixColGreen1 = source->pixel(j, i+1)   & 0xff00ff00; // Green-3
             pixColBlue   = source->pixel(j+1, i+1) & 0xff0000ff; // Blue-4
