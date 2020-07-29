@@ -10,9 +10,14 @@ BeyerFilter::BeyerFilter()
     QGridLayout *gridLayout = new QGridLayout(wdg);
 
     sourceButton = new QToolButton();
+    beyerButton  = new QPushButton(QString("Debeyer Image"));
+    slider       = new QSlider(Qt::Horizontal);
+
     sourceButton->setText("Load an image...");
 
-    beyerButton = new QPushButton(QString("Debeyer Image"));
+    slider->setRange(0, 100);
+    slider->setSingleStep(5);
+    slider->setTracking(true);
 
     // Initialize the clean plate image
     QImage tmp("./CleanPlate.png");
@@ -20,14 +25,21 @@ BeyerFilter::BeyerFilter()
 
     cleanPlate.save(tr("hotdog.png"), "PNG");
 
-    gridLayout->addWidget(sourceButton, 1, 0, 3, 1);
-    gridLayout->addWidget(beyerButton,  0, 0);
+    gridLayout->addWidget(beyerButton,  0, 0, Qt::AlignHCenter);
+    gridLayout->addWidget(sourceButton, 1, 0, Qt::AlignHCenter);
+    gridLayout->addWidget(slider,       2, 0);
     //TODO add rotation and zoom buttons
 
-    connect(sourceButton, SIGNAL(clicked()), this, SLOT(chooseSource()));
-    connect(beyerButton,  SIGNAL(clicked()), this, SLOT(saveOutput()));
+    connect(sourceButton, SIGNAL(clicked()),         this, SLOT(chooseSource()));
+    connect(beyerButton,  SIGNAL(clicked()),         this, SLOT(saveOutput()));
+    connect(slider,       SIGNAL(valueChanged(int)), this, SLOT(updateTolerance()));
+
 
     setCentralWidget(wdg);
+
+    printf("sourceImage is Null? %s\n", sourceImage.isNull() ? "True" : "False");
+    printf("sourceImage is Null? %s\n", outputImage.isNull() ? "True" : "False");
+    printf("sourceImage is Null? %s\n", fgOutput.isNull() ? "True" : "False");
 }
 
 BeyerFilter::~BeyerFilter()
@@ -37,11 +49,23 @@ BeyerFilter::~BeyerFilter()
     delete beyerButton;
 }
 
-//Seems like boilerplate code...
-void BeyerFilter::chooseSource()
+void BeyerFilter::updateTolerance()
 {
-    chooseImage(tr("Choose Source Image"), &sourceImage, sourceButton);
+    if (0 == slider->value())
+    {
+        tolerance = 0;
+        return;
+    }
+
+    tolerance = slider->value() / 100.0;
+
+    if (!fgOutput.isNull())
+    {
+        extractForeground(&outputImage, &fgOutput);
+        sourceButton->setIcon(QPixmap::fromImage(fgOutput));
+    }
 }
+
 
 void BeyerFilter::saveOutput()
 {
@@ -65,6 +89,12 @@ void BeyerFilter::saveOutput()
     }
 }
 
+//Seems like boilerplate code...
+void BeyerFilter::chooseSource()
+{
+    chooseImage(tr("Choose Source Image"), &sourceImage, sourceButton);
+}
+
 void BeyerFilter::chooseImage(const QString &title, QImage *image, QToolButton *button)
 {
     QString fileName = QFileDialog::getOpenFileName(this, title);
@@ -81,18 +111,16 @@ void BeyerFilter::chooseImage(const QString &title, QImage *image, QToolButton *
     }
 }
 
-// Probably don't need this function
-void BeyerFilter::saveImage(const QString &fileName, QImage *image)
-{
-    image->save(fileName, "PNG");
-}
-
 
 bool BeyerFilter::debeyer(QImage *source, QImage *output)
 {
     const int w = source->width();  // Width of source image
     const int h = source->height(); // heigh of source image
 
+    if (source->isNull())
+    {
+        return false;
+    }
 
     /*
      * setPixel seems to be inefficent according to documentation; could run awfully on very large resolutions...
@@ -160,7 +188,7 @@ bool BeyerFilter::extractForeground(QImage *source, QImage *output)
 
             QRgb cleanPixel      = qGreen(cleanPlate.pixel(j, i));
 
-            double tol    = 0.2; // Make this change with slider
+//            double tol    = 0.2; // Make this change with slider
             double ratioG = ((double)sourcePixelG  / (double)cleanPixel);
 
 
@@ -169,7 +197,7 @@ bool BeyerFilter::extractForeground(QImage *source, QImage *output)
              * checking for blue could leave blue artifacts around
              * from the debeyering in the background of the extracted image
              */
-            if (((1 - tol) <= ratioG) && (ratioG <= (1 + tol))
+            if (((1 - tolerance) <= ratioG) && (ratioG <= (1 + tolerance))
                     && (sourcePixelG > sourcePixelR))
 
             {
