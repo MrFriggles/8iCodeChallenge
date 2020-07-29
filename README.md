@@ -20,17 +20,14 @@ Foreground extracted image (tolerance at ~80%):
 ## How to build
 In a directory of your choosing, extract the source code to a new directory:
 
-```
-mkdir 8i
-unzip 8i.zip -d 8i
-```
+`unzip 8iCodeChallenge-master.zip`
 
 Create the ninja makefiles necessary to bulid the project using cmake:
 
 ```
 mkdir build
 cd build
-cmake -G Ninja ../8i
+cmake -G Ninja ../8iCodeChallenge-master
 ```
 
 Build the program:
@@ -54,4 +51,4 @@ Simply call the 8i program in the commandline:
 
 ## Bugs
  * When an image is debayered and extracted the first time, the foreground will have a tolerance of 0... So a terrible foreground will be requested to be saved.
-
+ * Perhaps needs to add some signal handling or a proper exit routine as the program segfaults on exit :upside_down_face:
