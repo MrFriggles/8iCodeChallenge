@@ -5,16 +5,17 @@ This program is a GUI that will take in a raw PNG bayered image, debayer that im
 
 Raw PNG bayered image:
 
-![bayered image](./resources/bottle.png, "Bayered image")
+![bayered image](https://github.com/MrFriggles/8iCodeChallenge/blob/master/resources/Bottle.png "Bayered image")
 
 
 Debayered image:
 
-![debayered image](./examples/bottleDebayered.png, "Debayered image")
+![debayered image](https://github.com/MrFriggles/8iCodeChallenge/blob/master/examples/bottleDebayered.png "Debayered image")
 
 
 Foreground extracted image (tolerance at ~80%):
-![foreground image](./examples/foreground.png, "Foreground image")
+
+![foreground image](https://github.com/MrFriggles/8iCodeChallenge/blob/master/examples/foreground.png "Foreground image")
 
 ## How to build
 In a directory of your choosing, extract the source code to a new directory:
