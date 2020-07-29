@@ -244,7 +244,7 @@ bool BayerFilter::debayer(QImage *source, QImage *output)
 
         l = 0;
 
-        // only increment every second x
+        // only increment every second y
         if (i % 2 == 0)
         {
             k++;
