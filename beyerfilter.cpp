@@ -4,11 +4,17 @@ static const QSize windowSize(1000, 700); //Arbritary ... It just looks nice
 
 BayerFilter::BayerFilter()
 {
+    // Create the main widget
     wdg = new QWidget(this);
     wdg->setFixedSize(windowSize);
 
+    /*
+     * Create a new girdLayout. This will house all our
+     * buttons, sliders, and images.
+     */
     QGridLayout *gridLayout = new QGridLayout(wdg);
 
+    // initialize all child widgets
     sourceButton = new QToolButton();
     bayerButton  = new QPushButton(QString("Debayer Image"));
     slider       = new QSlider(Qt::Horizontal);
@@ -16,6 +22,7 @@ BayerFilter::BayerFilter()
 
     sourceButton->setText("Load an image...");
 
+    // Slider should be 0% to 100% for image extraction tolerance
     slider->setRange(0, 100);
     slider->setSingleStep(5);
 
@@ -23,12 +30,17 @@ BayerFilter::BayerFilter()
     QImage tmp("./CleanPlate.png");
     debayer(&tmp, &cleanPlate);
 
+    /*
+     * Setup everything in the same column. Won't win UI/UX awards,
+     * but it does the job...
+     */
     gridLayout->addWidget(bayerButton,  0, 0, Qt::AlignHCenter);
     gridLayout->addWidget(saveButton,   1, 0, Qt::AlignHCenter);
     gridLayout->addWidget(sourceButton, 2, 0, Qt::AlignHCenter);
     gridLayout->addWidget(slider,       3, 0);
     //TODO add rotation and zoom buttons
 
+    // Connect widgets to associated actions
     connect(sourceButton, SIGNAL(clicked()),         this, SLOT(chooseSource()));
     connect(bayerButton,  SIGNAL(clicked()),         this, SLOT(processImage()));
     connect(slider,       SIGNAL(valueChanged(int)), this, SLOT(updateTolerance()));
@@ -42,8 +54,16 @@ BayerFilter::~BayerFilter()
     delete wdg;
     delete sourceButton;
     delete bayerButton;
+    delete saveButton;
 }
 
+/*
+ * Slot Function to update the tolerance value from the slider.
+ *
+ * updateTolerance takes no parameters.
+ *
+ * returns nothing.
+ */
 void BayerFilter::updateTolerance()
 {
     if (0 == slider->value())
@@ -54,6 +74,7 @@ void BayerFilter::updateTolerance()
 
     tolerance = slider->value() / 100.0;
 
+    // Just in case the slider is moved when no image is loaded/debayered
     if (!fgOutput.isNull())
     {
         extractForeground(&outputImage, &fgOutput);
@@ -61,6 +82,14 @@ void BayerFilter::updateTolerance()
     }
 }
 
+/*
+ * Slot Function debayers and extracts the foreground image
+ * from the selected loaded image from the user.
+ *
+ * processImage takes no parameters.
+ *
+ * returns nothing.
+ */
 void BayerFilter::processImage()
 {
     QMessageBox msgBox;
@@ -88,6 +117,13 @@ void BayerFilter::processImage()
     }
 }
 
+/*
+ * Slot Function simply saves the foreground image from fgOutput to file.
+ *
+ * saveFgImage takes no parameters.
+ *
+ * returns nothing.
+ */
 void BayerFilter::saveFgImage()
 {
     QMessageBox msgBox;
@@ -104,12 +140,29 @@ void BayerFilter::saveFgImage()
     }
 }
 
-//Smells like boilerplate code...
+/*
+ * Slot Function calls chooseImage to load a new picture from the user.
+ * Smells like unnecessary boilerplate code in here...
+ *
+ * chooseSource takes no paremeters.
+ *
+ * returns nothing.
+ */
 void BayerFilter::chooseSource()
 {
     chooseImage(tr("Choose Source Image"), &sourceImage, sourceButton);
 }
 
+/*
+ * Function chooseImage creates a new dialog and requests the user to upload a new image file
+ * to be debayered and have the foreground extracted.
+ *
+ * Parameters:
+ *  * const QString &title: the title of the dialog box when opened.
+ *  * QImage *image: a pointer to a QImage variable to store the selected picture.
+ *  * QToolButton *button: the button that called this funtion, which will present
+ *                          the loaded picture from the image parameter.
+ */
 void BayerFilter::chooseImage(const QString &title, QImage *image, QToolButton *button)
 {
     QString fileName = QFileDialog::getOpenFileName(this, title);
@@ -126,7 +179,22 @@ void BayerFilter::chooseImage(const QString &title, QImage *image, QToolButton *
     }
 }
 
-
+/*
+ * Function debayer takes in two pointers to QImage variables.
+ * The source will be used to extract the light levels of each
+ * pixel, then match it against RGGB colouring in a quadrant.
+ * This quadrant is then mixed together as (R & B & ((G1+G2)/2)),
+ * then set in a new QImage to be set as the oupput. The resulting image
+ * will however be smaller as we are taking 4 pixels and making 1.
+ *
+ * Parameters:
+ *  * QImage *source: the image to be debayered.
+ *  * QImage *output: the resulting debayered output image.
+ *
+ * returns bool:
+ *  * true on successful debayering (is that a word?).
+ *  * false otherwise.
+ */
 bool BayerFilter::debayer(QImage *source, QImage *output)
 {
     const int w = source->width();  // Width of source image
@@ -149,6 +217,7 @@ bool BayerFilter::debayer(QImage *source, QImage *output)
     QRgb pixColGreen2;
     QRgb newPixCol;
 
+    // Resulting image will be halved in x and in y
     QImage tmp = QImage(source->scaled(w/2, h/2, Qt::KeepAspectRatio));
 
     int k = 0;  // Scaled height index
@@ -166,6 +235,7 @@ bool BayerFilter::debayer(QImage *source, QImage *output)
 
             tmp.setPixel(l, k, newPixCol);
 
+            // only increment every second x
             if (j % 2 == 0)
             {
                 l++;
@@ -174,6 +244,7 @@ bool BayerFilter::debayer(QImage *source, QImage *output)
 
         l = 0;
 
+        // only increment every second x
         if (i % 2 == 0)
         {
             k++;
@@ -185,6 +256,19 @@ bool BayerFilter::debayer(QImage *source, QImage *output)
     return true;
 }
 
+
+/*
+ * Function extractForeground takes a debayered image and removes the background
+ * greenscreen, leaving a foreground image; which is the resulting output image.
+ *
+ * Parameters:
+ *  * QImage *source: the debayered image that will extract the foreground image.
+ *  * QImage *output: the resulting foreground image.
+ *
+ * returns bool:
+ *  * true on successful foreground extraction.
+ *  * false otherwise.
+ */
 bool BayerFilter::extractForeground(QImage *source, QImage *output)
 {
     QImage tmp = QImage(source->size(), QImage::Format_ARGB32);
