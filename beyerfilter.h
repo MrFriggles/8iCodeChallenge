@@ -13,25 +13,27 @@
 #include <QToolButton>
 
 
-class BeyerFilter : public QMainWindow
+class BayerFilter : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    BeyerFilter();
-    ~BeyerFilter();
+    BayerFilter();
+    ~BayerFilter();
 
 // Slots are some Qt meta-programming feature? They seem to work...
 private slots:
     void chooseSource();
     void updateTolerance();
-    void saveOutput();
+    void processImage();
+    void saveFgImage();
 
 private:
     QWidget *wdg;
 
     QToolButton *sourceButton;
-    QPushButton *beyerButton;
+    QPushButton *bayerButton;
+    QPushButton *saveButton;
     QSlider     *slider;
 
     QImage sourceImage;
@@ -40,11 +42,10 @@ private:
     QImage fgOutput;
     double tolerance;
 
-    bool debeyer(QImage *source, QImage *output);
+    bool debayer(QImage *source, QImage *output);
     bool extractForeground(QImage *source, QImage *output);
     void chooseImage(const QString &title, QImage *image, QToolButton *button);
     void loadImage(const QString &fileName, QImage *image, QToolButton *button);
-    void saveImage(const QString &fileName, QImage *image);
 };
 
 #endif // BEYERFILTER_H

@@ -2,7 +2,7 @@
 
 static const QSize windowSize(1000, 700); //Arbritary ... It just looks nice
 
-BeyerFilter::BeyerFilter()
+BayerFilter::BayerFilter()
 {
     wdg = new QWidget(this);
     wdg->setFixedSize(windowSize);
@@ -10,46 +10,41 @@ BeyerFilter::BeyerFilter()
     QGridLayout *gridLayout = new QGridLayout(wdg);
 
     sourceButton = new QToolButton();
-    beyerButton  = new QPushButton(QString("Debeyer Image"));
+    bayerButton  = new QPushButton(QString("Debayer Image"));
     slider       = new QSlider(Qt::Horizontal);
+    saveButton   = new QPushButton(QString("Save"));
 
     sourceButton->setText("Load an image...");
 
     slider->setRange(0, 100);
     slider->setSingleStep(5);
-    slider->setTracking(true);
 
     // Initialize the clean plate image
     QImage tmp("./CleanPlate.png");
-    debeyer(&tmp, &cleanPlate);
+    debayer(&tmp, &cleanPlate);
 
-    cleanPlate.save(tr("hotdog.png"), "PNG");
-
-    gridLayout->addWidget(beyerButton,  0, 0, Qt::AlignHCenter);
-    gridLayout->addWidget(sourceButton, 1, 0, Qt::AlignHCenter);
-    gridLayout->addWidget(slider,       2, 0);
+    gridLayout->addWidget(bayerButton,  0, 0, Qt::AlignHCenter);
+    gridLayout->addWidget(saveButton,   1, 0, Qt::AlignHCenter);
+    gridLayout->addWidget(sourceButton, 2, 0, Qt::AlignHCenter);
+    gridLayout->addWidget(slider,       3, 0);
     //TODO add rotation and zoom buttons
 
     connect(sourceButton, SIGNAL(clicked()),         this, SLOT(chooseSource()));
-    connect(beyerButton,  SIGNAL(clicked()),         this, SLOT(saveOutput()));
+    connect(bayerButton,  SIGNAL(clicked()),         this, SLOT(processImage()));
     connect(slider,       SIGNAL(valueChanged(int)), this, SLOT(updateTolerance()));
-
+    connect(saveButton,   SIGNAL(clicked()),         this, SLOT(saveFgImage()));
 
     setCentralWidget(wdg);
-
-    printf("sourceImage is Null? %s\n", sourceImage.isNull() ? "True" : "False");
-    printf("sourceImage is Null? %s\n", outputImage.isNull() ? "True" : "False");
-    printf("sourceImage is Null? %s\n", fgOutput.isNull() ? "True" : "False");
 }
 
-BeyerFilter::~BeyerFilter()
+BayerFilter::~BayerFilter()
 {
     delete wdg;
     delete sourceButton;
-    delete beyerButton;
+    delete bayerButton;
 }
 
-void BeyerFilter::updateTolerance()
+void BayerFilter::updateTolerance()
 {
     if (0 == slider->value())
     {
@@ -66,22 +61,24 @@ void BeyerFilter::updateTolerance()
     }
 }
 
-
-void BeyerFilter::saveOutput()
+void BayerFilter::processImage()
 {
     QMessageBox msgBox;
 
-    if (debeyer(&sourceImage, &outputImage)
-            && extractForeground(&outputImage, &fgOutput)
-            && fgOutput.save(tr("beans.png", "PNG")))
+    if (debayer(&sourceImage, &outputImage)
+            && extractForeground(&outputImage, &fgOutput))
     {
-
         sourceButton->setIcon(QPixmap::fromImage(fgOutput));
+        msgBox.setText("Foreground image has been extracted.");
+        msgBox.setInformativeText("Do you want to save the foreground image?");
 
-        //TODO this should request user if they want to save the debayered image
-        msgBox.setIcon(QMessageBox::Information);
-        msgBox.setText("Image 'beans.png' saved to build diretory.");
-        msgBox.exec();
+        msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Save);
+
+        if (msgBox.exec() == QMessageBox::Save)
+        {
+            saveFgImage();
+        }
     }
     else
     {
@@ -91,13 +88,29 @@ void BeyerFilter::saveOutput()
     }
 }
 
-//Seems like boilerplate code...
-void BeyerFilter::chooseSource()
+void BayerFilter::saveFgImage()
+{
+    QMessageBox msgBox;
+
+    if (fgOutput.save("foreground.png", "PNG"))
+    {
+        msgBox.setText("Foreground image has been saved as 'foreground.png'.");
+        msgBox.exec();
+    }
+    else
+    {
+      msgBox.setText("Unable to save image!");
+      msgBox.setIcon(QMessageBox::Critical);
+    }
+}
+
+//Smells like boilerplate code...
+void BayerFilter::chooseSource()
 {
     chooseImage(tr("Choose Source Image"), &sourceImage, sourceButton);
 }
 
-void BeyerFilter::chooseImage(const QString &title, QImage *image, QToolButton *button)
+void BayerFilter::chooseImage(const QString &title, QImage *image, QToolButton *button)
 {
     QString fileName = QFileDialog::getOpenFileName(this, title);
 
@@ -114,7 +127,7 @@ void BeyerFilter::chooseImage(const QString &title, QImage *image, QToolButton *
 }
 
 
-bool BeyerFilter::debeyer(QImage *source, QImage *output)
+bool BayerFilter::debayer(QImage *source, QImage *output)
 {
     const int w = source->width();  // Width of source image
     const int h = source->height(); // heigh of source image
@@ -172,7 +185,7 @@ bool BeyerFilter::debeyer(QImage *source, QImage *output)
     return true;
 }
 
-bool BeyerFilter::extractForeground(QImage *source, QImage *output)
+bool BayerFilter::extractForeground(QImage *source, QImage *output)
 {
     QImage tmp = QImage(source->size(), QImage::Format_ARGB32);
 
@@ -190,9 +203,7 @@ bool BeyerFilter::extractForeground(QImage *source, QImage *output)
 
             QRgb cleanPixel      = qGreen(cleanPlate.pixel(j, i));
 
-//            double tol    = 0.2; // Make this change with slider
             double ratioG = ((double)sourcePixelG  / (double)cleanPixel);
-
 
             /*
              * Only check for green dominance over red, as
