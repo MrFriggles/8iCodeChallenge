@@ -2,6 +2,7 @@
 #define BEYERFILTER_H
 
 #include <QMainWindow>
+#include <QColor>
 #include <QImage>
 #include <QPainter>
 #include <QToolButton>
