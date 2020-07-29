@@ -283,7 +283,7 @@ bool BayerFilter::extractForeground(QImage *source, QImage *output)
             QRgb sourcePixelAll  = source->pixel(j, i);
             QRgb sourcePixelR    = qRed(sourcePixelAll);
             QRgb sourcePixelG    = qGreen(sourcePixelAll);
-            QRgb sourcePixelB    = qBlue(sourcePixelAll); // Unused
+            // QRgb sourcePixelB    = qBlue(sourcePixelAll); // Unused
 
             QRgb cleanPixel      = qGreen(cleanPlate.pixel(j, i));
 
