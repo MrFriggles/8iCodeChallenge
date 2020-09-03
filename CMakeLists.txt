@@ -4,6 +4,8 @@ project(8i LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+add_subdirectory(tests)
+
 # Qt flags
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)

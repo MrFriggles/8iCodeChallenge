@@ -153,6 +153,7 @@ void BayerFilter::chooseSource()
     chooseImage(tr("Choose Source Image"), &sourceImage, sourceButton);
 }
 
+
 /*
  * Function chooseImage creates a new dialog and requests the user to upload a new image file
  * to be debayered and have the foreground extracted.
@@ -178,6 +179,7 @@ void BayerFilter::chooseImage(const QString &title, QImage *image, QToolButton *
         }
     }
 }
+
 
 /*
  * Function debayer takes in two pointers to QImage variables.

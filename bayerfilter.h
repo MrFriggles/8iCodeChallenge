@@ -20,6 +20,8 @@ class BayerFilter : public QMainWindow
 public:
     BayerFilter();
     ~BayerFilter();
+    static bool debayer(QImage *source, QImage *output);
+
 
 // Slots are some Qt meta-programming feature? They seem to work...
 private slots:
@@ -42,7 +44,6 @@ private:
     QImage fgOutput;
     double tolerance;
 
-    bool debayer(QImage *source, QImage *output);
     bool extractForeground(QImage *source, QImage *output);
     void chooseImage(const QString &title, QImage *image, QToolButton *button);
     void loadImage(const QString &fileName, QImage *image, QToolButton *button);
